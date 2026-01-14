@@ -60,4 +60,8 @@ You will likely need these roles for your open-source projects:
 ---
 ### Roles and Features
 Roles define what a server is (its primary identity or job), while Features are the specific tools or capabilities that help those roles function.
+
 ---
+
+![Windows Server 2012 R2 Principles](https://github.com/mindsparkist/Windows-Server-2012/blob/01_-_Key_Windows_Server_2012_R2_Principles/image%20(1).png?raw=true)
+
