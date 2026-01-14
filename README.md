@@ -58,5 +58,6 @@ You will likely need these roles for your open-source projects:
 
 
 ---
+### Roles and Features
+Roles define what a server is (its primary identity or job), while Features are the specific tools or capabilities that help those roles function.
 
-**Would you like me to provide a PowerShell script to automate the initial configuration of your new server?**
