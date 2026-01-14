@@ -65,3 +65,60 @@ Roles define what a server is (its primary identity or job), while Features are 
 
 ![Windows Server 2012 R2 Principles](https://github.com/mindsparkist/Windows-Server-2012/blob/01_-_Key_Windows_Server_2012_R2_Principles/image%20(1).png?raw=true)
 
+In Windows Server 2012 R2, you have three primary "interface levels" or configuration options. Unlike previous versions, you can actually switch between these levels without reinstalling the entire OS (unless you've removed the binary files for space).
+
+### The Three Configuration Levels
+
+| Configuration Level | Description | Primary Management Tools |
+| --- | --- | --- |
+| **Server Core** | The "headless" version. No desktop, no Start menu, and no Explorer. It is the most secure and resource-efficient. | PowerShell, Command Prompt, `sconfig.cmd`, Remote Management. |
+| **Minimal Server Interface** | A "middle ground" new to 2012. It removes the heavy GUI elements (Internet Explorer, Windows Explorer) but keeps **Server Manager** and the **MMC**. | Server Manager, MMC consoles, and local GUI tools (minus web/file browsers). |
+| **Server with a GUI** | The "Full" installation. Includes the complete Windows desktop experience, including the Start screen, IE, and all graphical tools. | Full Desktop Interface, Server Manager, and all standard GUI tools. |
+
+---
+
+### Switching Levels
+
+In 2012 R2, you can use PowerShell to jump between these. For example, to move from Core to the Full GUI, you would run:
+`Install-WindowsFeature Server-Gui-Mgmt-Infra, Server-Gui-Shell -Restart`
+
+Choosing between **Server Core** and a **Full Installation** (Server with a GUI) is a strategic decision that depends on your technical comfort, hardware resources, and specific role requirements.
+
+In Windows Server 2012 R2, you have the unique flexibility to switch between these modes using PowerShell without reinstalling the OS.
+
+---
+
+### Comparison Table: Core vs. Full
+
+| Feature | **Server Core** | **Full Installation (GUI)** |
+| --- | --- | --- |
+| **Primary Interface** | Command Line / PowerShell | Full Windows Desktop |
+| **Disk Footprint** | Small (~4 GB smaller) | Large |
+| **RAM Usage** | Low (approx. 180 MB at idle) | Higher (approx. 310 MB at idle) |
+| **Security** | **High** (Reduced attack surface) | **Lower** (More code = more risk) |
+| **Maintenance** | Fewer updates & fewer reboots | Frequent updates for GUI components |
+| **Best For...** | Active Directory, DHCP, DNS, Hyper-V | App compatibility, New Admins |
+
+---
+
+### When to Use Each
+
+#### **Use Server Core When:**
+
+* **Security is a Priority:** You are building critical infrastructure like a **Domain Controller** or **DNS Server**.
+* **Scaling in the Cloud/VMs:** You want to pack as many Virtual Machines as possible onto a single physical host.
+* **DevOps Automation:** You are managing servers via tools like **Ansible**, **Chef**, or **Puppet**. It forces you to write code rather than click buttons.
+* **Low Maintenance:** You want to minimize the number of times you have to reboot for Windows Updates.
+
+#### **Use Full Installation (GUI) When:**
+
+* **App Compatibility:** You are running software that *requires* a visual interface to install or function (e.g., some older SQL Server versions or 3rd party apps).
+* **Initial Troubleshooting:** You are still learning the environment and need the visual tools to diagnose complex networking or disk issues.
+* **Legacy Management:** Your team is not yet comfortable with PowerShell and needs the familiar "Start" menu and MMC consoles.
+
+---
+
+To convert a GUI server to Core in 2012 R2, run this in PowerShell:
+`Uninstall-WindowsFeature Server-Gui-Mgmt-Infra, Server-Gui-Shell -Restart`
+
+---
