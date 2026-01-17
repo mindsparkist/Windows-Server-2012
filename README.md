@@ -122,3 +122,54 @@ To convert a GUI server to Core in 2012 R2, run this in PowerShell:
 `Uninstall-WindowsFeature Server-Gui-Mgmt-Infra, Server-Gui-Shell -Restart`
 
 ---
+Managing servers in a workgroup (non-domain) environment requires a few extra security "handshake" steps because you don't have Active Directory to handle the trust between machines.
+
+---
+
+### Step 1: Prepare the Remote Server (The one you want to manage)
+
+You must ensure the remote server is ready to listen for management commands.
+
+1. **Enable Remote Management:** Open an elevated PowerShell prompt and run:
+`Configure-SMRemoting.exe -enable`
+2. **Verify WinRM:** Ensure the WinRM service is running:
+`winrm quickconfig` (Type 'y' if prompted).
+3. **Check Firewall:** Ensure **Windows Remote Management (HTTP-In)** is allowed through the firewall.
+
+---
+
+### Step 2: Configure the Local Machine (The one running Server Manager)
+
+Your local machine won't trust a non-domain server by default. You must explicitly add the remote server to your **TrustedHosts** list.
+
+1. **Add to TrustedHosts:** In PowerShell (as Administrator), run:
+`Set-Item WSMan:\localhost\Client\TrustedHosts -Value "RemoteServerNameOrIP" -Force`
+*Note: Use `-Concatenate` if you already have other servers in that list.*
+2. **DNS/Hosts File:** If you aren't using a DNS server, add the remote server's IP and name to your local `C:\Windows\System32\drivers\etc\hosts` file so your machine can resolve the name.
+
+---
+
+### Step 3: Add the Server in Server Manager
+
+1. Open **Server Manager**.
+2. Click **Manage** > **Add Servers**.
+3. Go to the **DNS** tab, type the name of your server, and click the arrow to move it to the **Selected** list. Click **OK**.
+4. **Crucial Step (Credentials):** The server will likely show a "Kerberos" or "Access Denied" error because it's trying to use your local login.
+* Right-click the server in the **All Servers** list.
+* Select **Manage As...**
+* Enter the credentials in this format: `RemoteServerName\Administrator` or `Workgroup\Administrator` and the password.
+
+
+
+---
+
+### Summary Checklist for Workgroup Management
+
+| Action | Purpose |
+| --- | --- |
+| **TrustedHosts** | Tells the local PC it's safe to talk to the remote PC without a domain. |
+| **WinRM Quickconfig** | Opens the communication "ports" on the remote server. |
+| **Manage As** | Passes the local administrator account of the *remote* machine. |
+
+
+---
