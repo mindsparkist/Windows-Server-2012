@@ -469,3 +469,70 @@ NIC Teaming, also known as **Load Balancing and Failover (LBFO)** in Windows Ser
 [NIC Teaming on Windows Server 2012](https://www.youtube.com/watch?v=m7exmRXRI9Y)
 
 This video explains the benefits of combining network cards for better performance and redundancy, while also covering common pitfalls you might encounter.
+
+Upgrading from Windows Server 2012 or 2012 R2 is a critical step for corporate environments, especially since these versions reached their End of Life in late 2023. You have two main paths: **In-place upgrades** (keeping everything as-is) or **Fresh installations** (migrating data to a clean slate).
+
+---
+
+### 1. Upgrade Requirements
+
+Before you begin, your server must meet these minimum hardware and software standards for modern releases (2019/2022).
+
+* **Processor:** 1.4 GHz 64-bit processor (32-bit is not supported).
+* **RAM:** 2 GB minimum (800 MB for VMs during setup).
+* **Disk Space:** 32 GB minimum (Corporate installs usually require **60 GB+** to account for the `Windows.old` folder).
+* **Current OS:** To upgrade to 2012 R2, you must be on 2012 or 2008 R2 SP1. To move to 2019/2022, you typically need to "hop" through 2016 first.
+* **Security:** TPM 2.0 and Secure Boot are required for Server 2022.
+
+---
+
+### 2. When to Upgrade vs. When NOT to
+
+| Use **In-Place Upgrade** When... | Use **Fresh Installation** When... |
+| --- | --- |
+| You have complex software with "lost" install keys. | You want a "clean slate" free of legacy bugs/junk. |
+| You need to minimize downtime and manual setup. | The current OS has performance issues or corruption. |
+| The server has fairly standard roles (DNS, IIS). | You are moving from physical hardware to a VM. |
+| You have a verified snapshot/backup ready. | You are jumping more than 2 versions ahead. |
+
+---
+
+### 3. Upgrade Paths: Standard vs. Datacenter
+
+Microsoft allows you to move "up" or "across" editions, but never "down."
+
+* **Standard  Standard:** Supported.
+* **Standard  Datacenter:** Supported (often used when you want to unlock unlimited virtualization).
+* **Datacenter  Datacenter:** Supported.
+* **Datacenter  Standard:** **NOT Supported.** You would have to perform a fresh installation.
+
+> **Note:** If you are using an **Evaluation** version, you must convert it to a **Retail** version using `DISM` before you can perform a standard in-place upgrade.
+
+---
+
+### 4. Fresh OS Installation (Clean Install)
+
+This is the "gold standard" for DevOps. Instead of upgrading the old OS, you:
+
+1. **Build** a new VM with a fresh copy of Windows Server 2022.
+2. **Install** your open-source DevOps tools (Git, Jenkins, etc.).
+3. **Migrate** only the necessary data from the old 2012 server.
+4. **Decommission** the old server once the new one is stable.
+
+---
+
+### 5. Essential Upgrade Checklist
+
+1. **Back up everything:** Take a VM snapshot or a full system image.
+2. **Disable NIC Teaming:** Always break the team before an in-place upgrade; re-enable it after.
+3. **Check disk space:** Ensure you have at least 40 GB free on the `C:` drive.
+4. **Uninstall incompatible apps:** Old antivirus or monitoring agents often break upgrades.
+5. **Run `setup.exe`:** Launch the installer from within the running OS (do not boot from the ISO for in-place upgrades).
+
+**Would you like me to walk you through the specific PowerShell commands for a "two-hop" upgrade from 2012 to 2022?**
+
+---
+
+[Upgrade Windows Server 2012 to 2012 R2](https://www.youtube.com/watch?v=oEOVG48mSd4)
+
+This video demonstrates the specific steps and prerequisites needed to perform an incremental in-place upgrade between these two versions safely.
