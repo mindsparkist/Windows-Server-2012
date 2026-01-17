@@ -431,3 +431,41 @@ A server is not "production-ready" if it isn't being watched.
 ---
 
 **Would you like a PowerShell script to automate these post-installation steps (Naming, Static IP, and WinRM) for your project?**
+
+NIC Teaming, also known as **Load Balancing and Failover (LBFO)** in Windows Server 2012 R2, allows you to group multiple physical network adapters into a single logical "team." For your open-source DevOps lab, this is a core concept for achieving high availability.
+
+### Pros of NIC Teaming
+
+* **High Availability (Failover):** If one network card or cable fails, traffic automatically reroutes to the remaining healthy NICs without dropping the connection.
+* **Bandwidth Aggregation:** You can combine multiple 1Gbps links into a larger logical pipe (e.g., two NICs = 2Gbps). Note that a single file transfer usually won't exceed the speed of one NIC; the benefit is seen when *multiple* clients connect simultaneously.
+* **Switch Diversity:** In "Switch Independent" mode, you can connect each NIC to a different physical switch. This protects you if an entire switch loses power or crashes.
+* **VLAN Support:** You can use a single NIC team to handle traffic for multiple VLANs, which is essential for segmenting management, production, and backup traffic in a corporate network.
+* **Native Support:** Since it is built into Windows Server 2012 R2, you no longer need buggy third-party drivers from vendors like Broadcom or Intel to create teams.
+
+---
+
+### Cons of NIC Teaming
+
+* **Increased Complexity:** Troubleshooting network issues becomes harder because you have to determine if the problem is with the physical NIC, the virtual team interface, or the switch configuration.
+* **Hardware Waste:** In "Active-Standby" configurations, you are paying for hardware (cables, ports, and NICs) that sits idle and does nothing unless a failure occurs.
+* **Performance Overhead:** The CPU has to do a small amount of extra work to calculate how to "hash" and distribute traffic across the team members.
+* **Incompatibility with iSCSI:** Microsoft explicitly recommends **not** using NIC Teaming for iSCSI storage traffic. Instead, you should use **MPIO** (Multi-Path I/O), which is designed specifically for storage redundancy.
+* **Configuration Mismatches:** If you use "Switch Dependent" modes (like LACP) and the network admin configures the switch incorrectly, the entire server can lose connectivity.
+
+---
+
+### Summary Table: When to use which mode?
+
+| Teaming Mode | Best For... | Switch Requirement |
+| --- | --- | --- |
+| **Switch Independent** | General DevOps/Web servers | Any basic switch (no config needed). |
+| **LACP (Link Aggregation)** | High-performance backbone | Managed switch with LACP enabled. |
+| **Static Teaming** | Legacy enterprise switches | Manual "Port Channel" config on switch. |
+
+**Would you like the PowerShell command to create a NIC Team with specific load-balancing settings for your server?**
+
+---
+
+[NIC Teaming on Windows Server 2012](https://www.youtube.com/watch?v=m7exmRXRI9Y)
+
+This video explains the benefits of combining network cards for better performance and redundancy, while also covering common pitfalls you might encounter.
