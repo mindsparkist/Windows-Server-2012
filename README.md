@@ -286,3 +286,64 @@ This is a "hidden gem" for testing. You can install Windows directly into a `.vh
 
 [Windows Server 2012 Step-by-Step Installation](https://www.youtube.com/watch?v=ScSJMfG5R1Y)
 This video provides a practical, visual guide to the standard installation process, which serves as the foundation for all the different media types mentioned above.
+
+Installing Windows Server 2012 R2 to a **VHD (Virtual Hard Disk)** is a professional technique often called "Native Boot." This allows you to run the OS from a single file on your physical hard drive without needing a virtual machine or a separate partition.
+
+Since you are setting up an open-source DevOps project, this is perfect for testing different "Golden Images" without messing up your main system.
+
+### Step 1: Launch the Command Prompt
+
+1. Boot from your Windows Server 2012 R2 installation media (USB or ISO).
+2. On the first setup screen (Language selection), press **SHIFT + F10**.
+3. A black Command Prompt window will appear.
+
+### Step 2: Create the VHD using Diskpart
+
+You need to create a virtual disk file on your physical drive to act as the "hard drive" for your installation.
+
+```cmd
+diskpart
+list disk
+select disk 0  (Ensure this is your primary physical drive)
+list partition (Check where you have space; usually C: or D:)
+
+```
+
+Now, create the VHD file. In this example, we'll create a 50GB file on the D: drive:
+
+```cmd
+create vdisk file="D:\Win2012.vhd" maximum=51200 type=expandable
+attach vdisk
+exit
+
+```
+
+* **maximum=51200**: Sets the size to 50GB (50 x 1024).
+* **type=expandable**: The file starts small and grows as you add data (saves space).
+
+### Step 3: Proceed with Installation
+
+1. Close the Command Prompt and return to the Setup Wizard.
+2. Click **Install Now** and accept the license terms.
+3. Choose **Custom: Install Windows only (advanced)**.
+4. You will now see a new, unallocated drive in the list (the 50GB VHD you just created).
+5. **Important:** You might see a warning saying "Windows cannot be installed to this disk." **Ignore it.**
+6. Select that drive and click **Next**. Windows will begin installing normally into that file.
+
+---
+
+### Why use VHD for DevOps?
+
+* **Portability:** You can copy this `.vhd` file to another computer, attach it, and boot from it instantly.
+* **Snapshotting:** Before you run a "risky" script or install a new open-source tool, you can simply make a copy of the `.vhd` file. If something breaks, just replace the file with your backup.
+* **Dual Boot:** You can keep your existing Windows OS and this Server OS on the same physical drive without the risk of overlapping `\Windows` folders.
+
+---
+
+**Would you like the PowerShell commands to add this VHD to your boot menu so you can choose it every time you restart?**
+
+---
+
+[Installing Windows Server 2012 R2 on a VHD](https://www.youtube.com/watch?v=Bq22mkZJLhQ)
+
+This video provides a practical look at how to manage and mount virtual hard disks within the Windows Server 2012 R2 environment.
