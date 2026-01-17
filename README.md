@@ -173,3 +173,61 @@ Your local machine won't trust a non-domain server by default. You must explicit
 
 
 ---
+In Windows Server 2012 R2, the structure of the installation media has changed significantly compared to older versions like Windows XP or Server 2003. Here is the breakdown of why you don't see that folder and how to execute your imaging plan.
+
+### 1. Where is the i386 folder?
+
+**It doesn't exist anymore.** The `i386` folder was used in 32-bit (x86) legacy versions of Windows. Since **Windows Server 2012 R2 is strictly 64-bit**, that folder has been replaced by the **`sources`** folder.
+
+* All your critical installation files, including the `.wim` files you are looking for, are now located in `X:\sources\`.
+
+---
+
+
+The Steps of creating a "Golden Image" or "Master Image" process. Here is the step-by-step to go from a fresh install to a reusable duplicate:
+
+#### **Step A: The Build (Install & Customize)**
+
+1. Perform a clean installation of Windows Server 2012 R2.
+2. Install all required open-source tools (Git, Docker, etc.) and Windows Updates.
+3. **Do not join a domain.** Keep the machine in a workgroup to avoid baking domain-specific SIDs into your image.
+
+#### **Step B: Sysprep (The Generalization)**
+
+Sysprep removes unique identifiers (like the Computer Name and SID) so the image can be duplicated safely.
+
+1. Open Command Prompt as Admin and navigate to: `C:\Windows\System32\Sysprep`.
+2. Run: `sysprep.exe /generalize /oobe /shutdown`
+* **/generalize:** Removes system-specific data.
+* **/oobe:** Forces the next user to see the "Out of Box Experience" (setup wizard).
+* **/shutdown:** Crucial—you must capture the image while the OS is "cold" (off).
+
+
+
+#### **Step C: Capture (Creating the .WIM)**
+
+Once the machine is off, you need to boot into a **WinPE (Windows Preinstallation Environment)** or use a Windows installation disk to access the command line (Shift + F10 at the setup screen).
+
+Use the **DISM** tool to capture your `install.wim`:
+
+```powershell
+dism /Capture-Image /ImageFile:D:\CapturedImage\install.wim /CaptureDir:C:\ /Name:"MyDevOpsImage"
+
+```
+
+* **CaptureDir:** This is your Windows partition (usually `C:\`).
+* **ImageFile:** Where you want to save the new file (a USB or network drive).
+
+---
+
+### 3. Difference between Boot.wim and Install.wim
+
+* **boot.wim:** This is the "Engine." It boots the computer and starts the installation environment (WinPE). You rarely need to modify this unless you are adding network drivers for a specific server model.
+* **install.wim:** This is the "Payload." It contains the actual Windows OS and your custom DevOps tools. This is the file you just created with DISM.
+
+---
+
+### PXE Boot
+
+Since you are doing open-source work, instead of manually replacing `install.wim` on a USB stick every time, look into **Windows Deployment Services (WDS)** or **MDT (Microsoft Deployment Toolkit)**. These tools allow you to PXE boot (boot over the network) and choose which image to install from a menu.
+
