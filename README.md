@@ -231,3 +231,58 @@ dism /Capture-Image /ImageFile:D:\CapturedImage\install.wim /CaptureDir:C:\ /Nam
 
 Since you are doing open-source work, instead of manually replacing `install.wim` on a USB stick every time, look into **Windows Deployment Services (WDS)** or **MDT (Microsoft Deployment Toolkit)**. These tools allow you to PXE boot (boot over the network) and choose which image to install from a menu.
 
+When you are preparing your open-source DevOps lab, choosing the right installation method for Windows Server 2012 R2 is all about speed and repeatability. Since the `i386` folder no longer exists, you will be working primarily with the `\sources` folder and `.wim` files across all these methods.
+
+### 1. CD / DVD (Physical Media)
+
+This is the "old school" method. You burn the ISO to a physical disk and boot the server from the optical drive.
+
+* **Pros:** Reliable for older hardware.
+* **Cons:** Slowest transfer speeds; disks can get scratched or lost.
+
+### 2. USB (Bootable Flash Drive)
+
+The most common method for physical hardware today. You use tools like **Rufus** or the **Windows USB/DVD Download Tool** to "burn" the ISO onto a thumb drive.
+
+* **Pros:** Fast installation; portable.
+* **Cons:** Requires physical access to the server; some older BIOS versions struggle to boot from USB.
+
+### 3. VM from ISO (Virtualization)
+
+In a DevOps environment (using Hyper-V, VMware, or VirtualBox), you simply "mount" the ISO file as a virtual DVD drive.
+
+* **Pros:** Instant setup; no physical media needed.
+* **Cons:** Requires a host OS already running a hypervisor.
+
+### 4. Network Share (PXE / WDS)
+
+This is the professional DevOps choice. You place the installation files on a **Windows Deployment Services (WDS)** server (Multicast Possible). The target server boots from its network card (PXE boot) and pulls the files over the LAN.
+
+* **Pros:** Install on dozens of servers simultaneously; no physical media.
+* **Cons:** Requires a complex initial setup (DHCP, DNS, and WDS server).
+
+### 5. VHD (Native Boot to VHD)
+
+This is a "hidden gem" for testing. You can install Windows directly into a `.vhd` or `.vhdx` file stored on an existing hard drive. You then tell the computer’s bootloader to boot from that file instead of a physical partition.
+
+* **Pros:** Allows "Dual Booting" without re-partitioning your hard drive; easy to delete the whole OS by just deleting one file.
+* **Cons:** Slightly more complex to set up using the Command Prompt during installation.
+
+---
+
+### Summary Comparison Table
+
+| Method | Speed | Best For... | Key Tool |
+| --- | --- | --- | --- |
+| **CD/DVD** | Slow | Legacy Hardware | Optical Drive |
+| **USB** | Fast | Single Physical Server | Rufus |
+| **VM/ISO** | Instant | Lab Testing / DevOps | Hyper-V / ESXi |
+| **Network** | Variable | Bulk Deployments | WDS / PXE |
+| **VHD** | Fast | Multi-boot / Testing | Diskpart (Shift+F10) |
+
+**Since you are doing DevOps, would you like the specific "Diskpart" commands to perform a "Native Boot to VHD" installation?**
+
+---
+
+[Windows Server 2012 Step-by-Step Installation](https://www.youtube.com/watch?v=ScSJMfG5R1Y)
+This video provides a practical, visual guide to the standard installation process, which serves as the foundation for all the different media types mentioned above.
