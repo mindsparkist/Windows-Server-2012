@@ -57,3 +57,94 @@ Install-WindowsFeature -Name Hyper-V -IncludeManagementTools -Restart
 
 [Hyper-V Virtualization Essentials](https://www.google.com/search?q=https://www.youtube.com/watch%3Fv%3DN_v9XkS8Acs)
 This video provides a deep dive into the Hyper-V architecture and why choosing the right installation level is critical for production performance.
+
+To build a professional virtualization environment for your open-source DevOps project, you need to understand both the hardware requirements and the networking logic that allows VMs to move between servers.
+
+---
+
+### 1. Hyper-V Installation Requirements
+
+Before enabling the role, your hardware must support these "Hard Requirements":
+
+* **64-bit Processor:** With Second Level Address Translation (**SLAT**).
+* **Hardware-assisted Virtualization:** Intel VT-x or AMD-V must be enabled in the BIOS/UEFI.
+* **Hardware-enforced Data Execution Prevention (DEP):** Intel XD bit or AMD NX bit must be enabled.
+* **RAM:** Minimum 4GB, but realistically 16GB+ for a lab.
+
+> **"Core Info" (Sysinternals):** To verify these requirements without entering the BIOS, download the **Coreinfo** tool from Microsoft Sysinternals. Run `coreinfo -v` in the command prompt. If you see an asterisk (`*`) next to "Hypervisor," your CPU is ready.
+
+---
+
+### 2. Steps to Add Hyper-V Role
+
+You can add the role via the GUI or PowerShell (Recommended for DevOps).
+
+**Via GUI:**
+
+1. Open **Server Manager** > **Add Roles and Features**.
+2. Select **Hyper-V**.
+3. Follow the wizard to configure default storage locations for VHDXs.
+4. **Restart** the server (mandatory to initialize the hypervisor).
+
+**Via PowerShell:**
+
+```powershell
+Install-WindowsFeature -Name Hyper-V -IncludeManagementTools -Restart
+
+```
+
+---
+
+### 3. Hyper-V Networking & The V-Switch
+
+Hyper-V uses a **Virtual Switch (V-Switch)** to connect VMs to each other and the physical world. There are three types:
+
+* **External:** Maps to a physical NIC. VMs can talk to the physical network/Internet.
+* **Internal:** Allows VMs to talk to each other and the Host OS, but no outside access.
+* **Private:** VMs can only talk to each other. Even the Host OS is isolated.
+
+**To create an External V-Switch via PowerShell:**
+
+```powershell
+New-VMSwitch -Name "DevOps-External" -NetAdapterName "Ethernet 1" -AllowManagementOS $true
+
+```
+
+---
+
+### 4. Advanced Performance: NUMA Spanning
+
+**NUMA (Non-Uniform Memory Access)** is a hardware architecture where a processor has its own local memory.
+
+* **NUMA Spanning:** If a VM needs more RAM than is available on a single physical CPU's "local" memory, Hyper-V can "span" and grab memory from another CPU's bank.
+* **DevOps Tip:** While spanning increases flexibility, it can cause a slight performance hit. For high-performance databases, you might want to disable NUMA spanning to keep memory access "local."
+
+---
+
+### 5. High Availability: Clusters & Live Migration
+
+To move VMs between servers without downtime, you need to set up **Failover Clustering**.
+
+* **Failover Cluster:** A group of independent servers working together. If one physical server fails, the others take over.
+* **Live Migration:** The process of moving a running VM from one cluster node to another with **zero downtime**.
+* **Requirements:** A shared storage (like a SAN or SMB 3.0 share), matching CPU architectures, and a dedicated "Live Migration" network (10Gbps recommended).
+
+
+
+---
+
+### Summary Table
+
+| Term | What it does |
+| --- | --- |
+| **Coreinfo** | Sysinternals tool to check virtualization support. |
+| **V-Switch** | The logical bridge between VMs and the physical network. |
+| **NUMA** | Optimizes how VMs use CPU and RAM memory banks. |
+| **Live Migration** | Moves a "live" VM from Server A to Server B without a reboot. |
+
+**Would you like the specific steps to configure "Shared Nothing" Live Migration (moving VMs without a cluster)?**
+
+---
+
+[Install and Configure Hyper-V on Windows Server 2012 R2](https://www.google.com/search?q=https://www.youtube.com/watch%3Fv%3DN_v9XkS8Acs)
+This video provides a visual walkthrough of the installation process and initial virtual switch configuration.
