@@ -315,3 +315,4 @@ Start-VM -Name $VMName
 
 [Create a Virtual Machine in Hyper-V](https://www.google.com/search?q=https://www.youtube.com/watch%3Fv%3DF0S0vR_2T9U)
 This video provides a side-by-side visual comparison of creating a VM using both the management console and the command line.
+
