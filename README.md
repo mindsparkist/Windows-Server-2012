@@ -857,4 +857,111 @@ Open `services.msc` and look for services starting with **"Hyper-V"**. They shou
 
 Now that your VM is "aware" of its host, would you like to see how to use **Resource Metering** in PowerShell to track exactly how much CPU and Network bandwidth your VM is consuming over a week?
 
+Monitoring your virtual machines is the only way to ensure your "Open Source DevOps" lab remains stable as you scale. While Task Manager gives you a quick look at the physical host, it doesn't tell the whole story of how individual VMs are competing for resources.
+
+---
+
+## 1. Monitoring Levels: Where to Look
+
+* **Task Manager (Host):** Good for seeing if the physical RAM is full, but it hides VM specifics inside the `vmwp.exe` (Virtual Machine Worker Process) tasks.
+* **Hyper-V Manager:** Provides a "Live View" of CPU, Memory Demand, and Uptime, but has no historical logging.
+* **Performance Monitor (Perfmon):** The professional choice for creating real-time dashboards and long-term logs.
+
+---
+
+## 2. Creating a Perfmon Dashboard for VMs (Step-by-Step)
+
+This allows you to create a "Single Pane of Glass" to watch your environment.
+
+### Step 1: Launch and Configure the View
+
+1. Press `Win + R`, type `perfmon /sys`, and hit Enter.
+2. Click on **Performance Monitor** in the left sidebar.
+3. Click the **plus (+)** icon to add counters.
+
+### Step 2: Adding Critical VM Counters
+
+In the "Add Counters" window, you must select the correct categories to see *through* the hypervisor:
+
+* **CPU:** Select **Hyper-V Hypervisor Logical Processor**.
+* Counter: `% Guest Run Time` (This is the actual work the VM is doing).
+* Instance: Select your specific VM names from the list.
+
+
+* **Memory:** Select **Hyper-V Dynamic Memory Balancer**.
+* Counter: `Average Pressure` (100 is perfect; higher means the VM is starving).
+
+
+* **Storage (HDD):** Select **Hyper-V Virtual Storage Device**.
+* Counter: `Write Bytes/sec` and `Read Bytes/sec`.
+* Instance: Select the specific VHDX files of your VMs.
+
+
+
+### Step 3: Customizing the Dashboard
+
+1. Right-click the graph and select **Properties**.
+2. Go to the **Graph** tab and change the "Vertical scale" to a maximum of 100 for percentage-based counters.
+3. Use the **Highlight** button (lightbulb icon) to make a specific VM's line thicker when selected.
+
+---
+
+## 3. Long-Term Tracking: VM Resource Metering
+
+In a DevOps environment, you need data over weeks, not minutes. Windows Server 2012 R2 has a built-in "flight recorder" called **Resource Metering**.
+
+### Step 1: Enable Metering (One-time setup)
+
+By default, this is turned off to save performance. Enable it via PowerShell:
+
+```powershell
+Enable-VMResourceMetering -VMName "DevOps-Node-01"
+
+```
+
+### Step 2: View the Data
+
+After the VM has been running for a few hours or days, you can pull the report:
+
+```powershell
+Measure-VM -VMName "DevOps-Node-01"
+
+```
+
+### Step 3: What the Report Tells You
+
+The `Measure-VM` command provides a clean object containing:
+
+* **AverageMemoryUsage:** Real-world RAM consumption.
+* **TotalDiskAllocation:** How much space is actually being used.
+* **NetworkInbound/Outbound:** Total data transferred (perfect for calculating cloud-style costs).
+
+---
+
+## 4. Resetting and Exporting Data
+
+If you want to start a fresh measurement for a new project:
+
+```powershell
+Reset-VMResourceMetering -VMName "DevOps-Node-01"
+
+```
+
+**DevOps Tip:** You can pipe this data to a CSV for your documentation:
+
+```powershell
+Measure-VM -VMName "DevOps-Node-01" | Export-Csv -Path "C:\Reports\VM_Usage.csv"
+
+```
+
+---
+
+### Summary Checklist
+
+| Tool | Best Usage | Scalability |
+| --- | --- | --- |
+| **Task Manager** | Panic check (Is the host crashing?) | Low |
+| **Perfmon** | Real-time troubleshooting/Dashboards | Medium |
+| **Measure-VM** | Capacity planning and "Billing" reports | **High (Automation)** |
+
 
