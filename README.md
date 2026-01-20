@@ -964,3 +964,64 @@ Measure-VM -VMName "DevOps-Node-01" | Export-Csv -Path "C:\Reports\VM_Usage.csv"
 | **Perfmon** | Real-time troubleshooting/Dashboards | Medium |
 | **Measure-VM** | Capacity planning and "Billing" reports | **High (Automation)** |
 
+In Windows Server 2012, **Live Migration** was a landmark update. Before this version, you were strictly required to have a Failover Cluster and Shared Storage (like a SAN). Windows Server 2012 "broke the rules" by introducing **Shared-Nothing Live Migration**, which allows you to move a running VM between two standalone servers with only an Ethernet cable connecting them.
+
+---
+
+### 1. How Live Migration Works (The Process)
+
+When you initiate a move, Hyper-V performs a "handshake" between the source and destination hosts to ensure the move will be successful without dropping a single ping.
+
+1. **Setup:** The source host connects to the destination host over TCP/IP and transfers the VM configuration (CPU, RAM settings, etc.). A "skeleton" VM is created on the destination.
+2. **Memory Transfer (Working Set):** The memory assigned to the VM is copied over the network. Since the VM is still running, it continues to change its memory. Hyper-V tracks these "dirty pages" (changed memory).
+3. **Iterative Copy:** Hyper-V copies the dirty pages repeatedly. Each pass is faster because fewer pages have changed since the last pass.
+4. **The Cut-Over:** Once the remaining dirty pages are small enough to transfer in milliseconds, the source VM is paused. The final state is moved, and the VM is "resumed" on the destination.
+5. **Network Cleanup:** A message (ARP) is sent to the physical network switch to let it know the VM’s MAC address is now at a different physical port.
+
+---
+
+### 2. The Three Types of Migration in 2012 R2
+
+Windows Server 2012 R2 added even more flexibility with performance enhancements:
+
+* **Standard Live Migration:** Uses legacy TCP/IP to move memory.
+* **Live Migration with Compression:** The default in 2012 R2. It uses the host CPU to compress memory data before sending it, making migrations up to 2x faster on 1Gbps networks.
+* **SMB Live Migration:** Uses **SMB Direct (RDMA)** and **SMB Multichannel** to move data. If you have 10Gbps or faster NICs, this is the fastest option.
+
+---
+
+### 3. Shared-Nothing Live Migration
+
+This is the most popular feature for DevOps labs. You can move a VM from **Server A** (with its own local SSD) to **Server B** (with its own local SSD).
+
+* **The Difference:** Hyper-V performs a **Storage Live Migration** first, mirroring the virtual hard disk (VHDX) across the network.
+* **The Result:** Once the storage is synchronized, it performs the standard memory live migration.
+
+---
+
+### 4. Prerequisites for Success
+
+To get this working in your environment, ensure you meet these "Hard Requirements":
+
+* **Domain Membership:** Both hosts must be in the same Active Directory domain.
+* **Processor Match:** Hosts should ideally have the same CPU family (Intel to Intel). If they don't, you **must** enable "Processor Compatibility Mode" in the VM settings.
+* **Virtual Switch Name:** The Virtual Switch on the destination server **must** have the exact same name as the one on the source server (e.g., both must be named "ExternalV-Switch").
+* **Authentication:** You must choose between **CredSSP** (requires you to be logged into the source server) or **Kerberos** (requires "Constrained Delegation" in Active Directory).
+
+---
+
+### 5. Step-by-Step: Enabling Live Migration
+
+1. Open **Hyper-V Manager** on both servers.
+2. Click **Hyper-V Settings** > **Live Migrations**.
+3. Check **Enable incoming and outgoing live migrations**.
+4. Under **Advanced Features**, choose **Compression** (for 1Gbps) or **SMB** (for 10Gbps+).
+5. Right-click your VM > **Move** > Follow the wizard.
+
+**Would you like me to walk you through the "Constrained Delegation" steps in Active Directory so you can manage migrations remotely without being logged into the server?**
+
+---
+
+[Windows Server 2012 Hyper-V Live Migration Explained](https://www.youtube.com/watch?v=BDbPcGGTYmw)
+
+This video provides a great high-level overview of how Microsoft updated the live migration engine to support move operations across standard network connections without shared storage.
