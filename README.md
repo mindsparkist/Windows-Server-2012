@@ -964,4 +964,3 @@ Measure-VM -VMName "DevOps-Node-01" | Export-Csv -Path "C:\Reports\VM_Usage.csv"
 | **Perfmon** | Real-time troubleshooting/Dashboards | Medium |
 | **Measure-VM** | Capacity planning and "Billing" reports | **High (Automation)** |
 
-
