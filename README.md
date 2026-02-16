@@ -70,3 +70,50 @@ The TCP/IP model collapses the OSI's **Session, Presentation, and Application** 
 3. **Layer 4-7:** Is the DNS service running, or is a Firewall port (TCP 53/88/389) blocking the request?
 
 **Would you like me to show you how to use the `Test-NetConnection` command in PowerShell to troubleshoot specific OSI Layer 4 ports?**
+
+In Windows Server 2012 R2 networking, understanding the difference between an **IP Address** and a **MAC Address** is like distinguishing between a person's **mailing address** and their **SSID/Aadhaar Number**. One is a logical location that can change, while the other is a permanent physical identifier.
+
+### 1. MAC Address (Media Access Control)
+
+The MAC address is the "Physical Address" assigned to the Network Interface Card (NIC) by the manufacturer. It operates at **Layer 2 (Data Link)** of the OSI model.
+
+* **Format:** A 48-bit hexadecimal address (e.g., `00-15-5D-01-22-AF`).
+* **Permanence:** It is burned into the hardware and generally does not change.
+* **Hyper-V Context:** When you create a Virtual Machine, Hyper-V assigns it a **Virtual MAC address** from a pre-defined pool so the virtual switch knows where to send data frames.
+* **NIC Teaming:** When you team two NICs together, the team itself assumes a single MAC address to represent the logical group to the physical switch.
+
+---
+
+### 2. IP Address (Internet Protocol)
+
+The IP address is the "Logical Address" assigned to a computer so it can be located on a network. It operates at **Layer 3 (Network)** of the OSI model.
+
+* **Format:** Typically IPv4 (e.g., `192.168.1.50`) or IPv6.
+* **Permanence:** It is temporary and can change if the server moves to a different subnet or if DHCP assigns a new one.
+* **Windows Server Context:** For Domain Controllers and critical infrastructure, you must use **Static IP addresses** so DNS and Active Directory can consistently find the server.
+* **Network Virtualization (HNV):** As we discussed, HNV allows a VM to keep its **Customer IP** even when its physical location (and **Provider IP**) changes.
+
+---
+
+### 3. Key Differences Comparison
+
+| Feature | MAC Address | IP Address |
+| --- | --- | --- |
+| **OSI Layer** | Layer 2 (Data Link) | Layer 3 (Network) |
+| **Address Type** | Physical / Hardware | Logical / Software |
+| **Assigned By** | Manufacturer | Network Admin or DHCP |
+| **Visibility** | Local Network only | Can be routed across the Internet |
+| **Utility** | Used to deliver data to a specific NIC. | Used to find a specific "node" globally. |
+
+---
+
+### 4. How They Work Together (ARP)
+
+In your DevOps lab, when Server A wants to talk to Server B, it uses a process called **ARP (Address Resolution Protocol)**:
+
+1. Server A knows Server B's **IP**, but the switch only understands **MACs**.
+2. Server A sends a broadcast: *"Who has IP 192.168.1.20? Tell me your MAC!"*
+3. Server B responds with its **MAC address**.
+4. Windows stores this in the **ARP Cache** so it doesn't have to ask again.
+
+> **Command Tip:** Run `arp -a` in your Windows command prompt to see the mapping of IPs to MAC addresses your server currently "knows."
