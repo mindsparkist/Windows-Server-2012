@@ -230,3 +230,4 @@ After running your script, use the following commands to confirm the settings ar
 * **`ipconfig /all`**: The classic command to see every detail of the network interface.
 
 **Would you like me to show you how to wrap this into a function so you can run a single command like `Setup-Server -IP 192.168.1.50`?**
+
