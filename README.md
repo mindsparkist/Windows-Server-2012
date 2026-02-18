@@ -230,4 +230,59 @@ After running your script, use the following commands to confirm the settings ar
 * **`ipconfig /all`**: The classic command to see every detail of the network interface.
 
 **Would you like me to show you how to wrap this into a function so you can run a single command like `Setup-Server -IP 192.168.1.50`?**
+In your Windows Server 2012 R2 environment, **DHCP (Dynamic Host Configuration Protocol)** is the service that automates the distribution of IP addresses, subnets, and gateways. Without DHCP, you would have to manually run your `New-NetIPAddress` script on every single machine in your lab.
+
+---
+
+### 1. The DORA Process
+
+When a client (like a fresh VM) boots up and is set to "Obtain an IP address automatically," it goes through a four-step handshake known as **DORA**.
+
+* **Discover:** The client broadcasts a message to the entire network: *"I need an IP address! Is there a DHCP server out there?"*
+* **Offer:** The DHCP server hears the request and broadcasts back: *"I have an IP (192.168.1.50) available for you. Do you want it?"*
+* **Request:** The client responds: *"Yes, please! I would like to use 192.168.1.50."*
+* **Acknowledgment (ACK):** The server sends the final confirmation: *"Great! You have it for the next 8 days. Here is your Subnet Mask and Gateway too."*
+
+---
+
+### 2. Steps to Install DHCP on Windows Server 2012 R2
+
+Installing DHCP is a two-part process: installing the role and then "Authorizing" it in Active Directory so it can safely provide IPs without being blocked as a "Rogue" server.
+
+#### **Step 1: Install the Role**
+
+1. Open **Server Manager** > **Add Roles and Features**.
+2. Select **DHCP Server** from the list.
+3. Click through the wizard and select **Install**.
+
+#### **Step 2: Post-Deployment Configuration**
+
+1. Click the **Yellow Warning Flag** in Server Manager.
+2. Click **Complete DHCP Configuration**.
+3. Provide your **Domain Admin credentials** to "Authorize" the server in AD.
+
+#### **Step 3: Create a Scope**
+
+A "Scope" is the range of IPs the server is allowed to give out.
+
+1. Open **DHCP Manager** (`dhcpmgmt.msc`).
+2. Right-click **IPv4** > **New Scope**.
+3. **Name:** Give it a name like "Lab-Network."
+4. **IP Address Range:** Set your Start (e.g., `192.168.1.100`) and End (e.g., `192.168.1.200`).
+5. **Exclusions:** Add any IPs in that range you want to keep for static servers.
+6. **Lease Duration:** Default is 8 days (standard for office environments).
+7. **Scope Options:** Add your **Default Gateway** (003) and **DNS Servers** (006).
+
+---
+
+### 3. Key Concepts in DHCP Management
+
+| Term | DevOps Use Case |
+| --- | --- |
+| **Lease** | The amount of time a VM is allowed to keep an IP before it must ask for a renewal. |
+| **Reservation** | A "fixed" IP assigned to a specific **MAC Address**. The VM uses DHCP, but it always gets the same IP (useful for printers or app servers). |
+| **Exclusion** | Preventing the DHCP server from giving out specific IPs (like the ones you used for your Domain Controller). |
+| **DHCP Relay** | Used if your clients are on a different subnet than your DHCP server; it "relays" the DORA broadcast to the server. |
+
+---
 
