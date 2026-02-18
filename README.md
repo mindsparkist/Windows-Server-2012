@@ -177,3 +177,56 @@ As you manage your Windows Server 2012 R2 environment, you will use these comman
 | **Subnet Mask** | Defines the "local" range. | An `if` statement checking if an ID is in a local array. |
 | **Gateway** | The exit to other networks. | An `API Endpoint` or `Proxy` used for external calls. |
 
+In Windows Server 2012 R2 and later, the `New-NetIPAddress` cmdlet is the standard PowerShell way to configure a static IP, replacing older netsh commands. This is a vital skill for your DevOps lab as it allows you to automate server provisioning without the GUI.
+
+### The Basic PowerShell Script
+
+This script identifies the correct network adapter by its alias (usually "Ethernet") and applies the IP, Subnet Mask (via PrefixLength), and Default Gateway in one go.
+
+```powershell
+# Define the IP configuration variables
+$IPAddress = "192.168.1.50"
+$Prefix    = 24                # This equals a Subnet Mask of 255.255.255.0
+$Gateway   = "192.168.1.1"
+$Interface = "Ethernet"        # The name of your network adapter
+
+# 1. Set the Static IP and Gateway
+New-NetIPAddress -InterfaceAlias $Interface `
+                 -IPAddress $IPAddress `
+                 -AddressFamily IPv4 `
+                 -PrefixLength $Prefix `
+                 -DefaultGateway $Gateway
+
+# 2. Set the DNS Servers (Crucial for Active Directory)
+Set-DnsClientServerAddress -InterfaceAlias $Interface `
+                           -ServerAddresses ("192.168.1.10", "8.8.8.8")
+
+```
+
+---
+
+### Breaking Down the Parameters
+
+* **`-InterfaceAlias`**: The "Name" of the adapter. You can find this by running `Get-NetAdapter`.
+* **`-PrefixLength`**: Instead of typing `255.255.255.0`, you use the CIDR notation (e.g., `24`). This defines your **Subnet** boundary.
+* **`-AddressFamily`**: Specifies whether you are configuring `IPv4` or `IPv6`.
+* **`-DefaultGateway`**: The IP of your router that provides the exit to other networks.
+
+---
+
+### Best Practices for Your DevOps Lab
+
+1. **Check for existing IPs:** If the adapter already has an IP (like one assigned by DHCP), the command might fail. You should usually run `Remove-NetIPAddress` or `Set-NetIPAddress` if the address already exists.
+2. **DNS is Mandatory:** As we discussed regarding **Active Directory** and **DNS** correlation, your server won't be able to find the Domain Controller unless you also use `Set-DnsClientServerAddress` to point to your DC's IP.
+3. **Static IPs for Infrastructure:** Always use static IPs for your Domain Controllers, Database servers, and Web Servers. Use DHCP only for client machines or temporary test nodes.
+
+---
+
+### How to Verify the Change
+
+After running your script, use the following commands to confirm the settings are active:
+
+* **`Get-NetIPConfiguration`**: Provides a clean summary of IP, Gateway, and DNS.
+* **`ipconfig /all`**: The classic command to see every detail of the network interface.
+
+**Would you like me to show you how to wrap this into a function so you can run a single command like `Setup-Server -IP 192.168.1.50`?**
